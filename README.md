@@ -12,11 +12,11 @@ This was developed for a couple of reasons:
 
 ### Quick start
 
-Two versions are included: an "inline" one with all code in a single file ([NSxFile.m](blob/master/NSxFile.m)); and a "modular" version, with extra methods in their own files in a Matlab class directory ([@NSxFile](tree/master/Modular%20Version/%40NSxFile)).
+Two versions are included: an "inline" one with all code in a single file ([NSxFile.m](NSxFile.m)); and a "modular" version, with extra methods in their own files in a Matlab class directory ([@NSxFile](Modular%20Version/%40NSxFile)).
 
 Only one is needed: 
-For basic usage, go for the [inline code](blob/master/NSxFile.m);
-For an easily modifiable version, in order to add your own methods, go for the [modular one](tree/master/Modular%20Version/%40NSxFile).
+For basic usage, go for the [inline code](NSxFile.m);
+For an easily modifiable version, in order to add your own methods, go for the [modular one](Modular%20Version/%40NSxFile).
 
 Using either, basic usage to load a file called "example.ns5" is:
 ```Matlab

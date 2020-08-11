@@ -9,6 +9,8 @@ This was developed for a couple of reasons:
 * Modular extensibility:
   - Switch between options within the object itself during read-time;
   - Load extra functionality as needed _(e.g. spike extraction and export to [UMS2000](https://github.com/danamics/UMS2K) format is built-in, and writing new modules is as simple as adding a new method)_
+  
+The basic reading of the data structure builds on Blackrock's original [openNSx.m](https://github.com/BlackrockMicrosystems/NPMK/blob/master/NPMK/openNSx.m) in the [NPMK](https://github.com/BlackrockMicrosystems/NPMK) toolbox, and updates the methods to run in an object-oriented manner.
 
 ### Quick start
 

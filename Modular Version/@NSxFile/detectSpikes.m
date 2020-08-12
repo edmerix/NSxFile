@@ -44,14 +44,16 @@ for c = 1:length(settings.channels)
         raw = cell2mat(obj.data);
         mua = filtfilt(b,a,double(raw(ind,:)));
         clear raw
-        overRes = double(obj.electrodeinfo(ind).DigitalRange(2)) ...
-            / double(obj.electrodeinfo(ind).AnalogRange(2));
-        if overRes ~= round(overRes)
-            warning(['Channel ' num2str(settings.channels(c)) ...
-                ' has a weird digital:analog ratio (' ...
-                num2str(overRes) '), proceeding nonetheless']);
+        if ~isempty(obj.electrodeinfo)
+            overRes = double(obj.electrodeinfo(ind).DigitalRange(2)) ...
+                / double(obj.electrodeinfo(ind).AnalogRange(2));
+            if overRes ~= round(overRes)
+                warning(['Channel ' num2str(settings.channels(c)) ...
+                    ' has a weird digital:analog ratio (' ...
+                    num2str(overRes) '), proceeding nonetheless']);
+            end
+            mua = mua/overRes;
         end
-        mua = mua/overRes;
 
         mask = ones(1,length(mua));
         if ~isempty(settings.blank)

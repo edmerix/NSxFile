@@ -71,6 +71,10 @@ for c = 1:length(settings.channels)
         post = ceil(settings.window(2)*(obj.Fs/1e3));
 
         locs(locs-pre < 1 | locs+post > length(mua)) = [];
+        % don't include the spikes that were within the blanking period:
+        if ~isempty(settings.blank)
+            locs(locs >= settings.blank(1)*obj.Fs & locs < settings.blank(2)*obj.Fs) = [];
+        end
 
         spkwin = pre:post;
         spks = zeros(length(spkwin),length(locs));

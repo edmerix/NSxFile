@@ -133,11 +133,19 @@ classdef NSxFile < handle
             end
             
             settings.channel = -1;
+            settings.channels = []; % 'channels' is more routinely used outside this function, so allow both
             settings.time = [-Inf Inf];
             settings.units = 's';
             settings.downsample = 1; % read every nth data point
             
             settings = obj.parseInputs(varargin,settings);
+            
+            % If settings.channels isn't empty and settings.channel isn't the same,
+            % then the user supplied 'channels' instead of 'channel', so use that
+            % instead:
+            if ~isempty(settings.channels) && ~isequal(settings.channel, settings.channels)
+                settings.channel = settings.channels;
+            end
             
             switch settings.units
                 case  {'s','seconds','sec','secs'}

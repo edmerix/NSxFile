@@ -1,5 +1,7 @@
 # NSxFile
 
+>__Warning for minor-update as of 2020-10-02__: _detectSpikes() method now allows the selection of positive or negative deflection detection by setting the value of the 'threshold' input. This means that if you were manually setting a positive threshold value before, it will now detect positive deflections instead. The default is -4, for negative deflections._
+
 NSxFile is an object-oriented approach to working with [Blackrock Microsystems](https://www.blackrockmicro.com) neural data files (e.g. ns3, ns5 etc.) in Matlab.
 
 This was developed for a couple of reasons:

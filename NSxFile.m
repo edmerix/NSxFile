@@ -123,8 +123,32 @@ classdef NSxFile < handle
         end
         
         function read(obj,varargin)
-        % read a channel (or all channels) for a specific time (or all 
+        % Read a channel (or all channels) for a specific time (or all 
         % times)
+        % Loads the data into the object, as a cell array, so that the data
+        % structure is the same regardless of whether a file contains
+        % paused data. The data are stored in NSxFile.data
+        %
+        % Will default to reading all channels and the whole file if called
+        % with no input arguments. Available inputs (name, value pairs)
+        % are:
+        %
+        %   'channels':   array of channel numbers to read. If empty, will 
+        %                   read all (default)
+        %   'channel':    duplicate of 'channels', holdover from previous
+        %                   version.
+        %   'time':       [1 x 2] array for the start and stop time to read 
+        %                   from the file (see below for changing units).
+        %                   Defaults to [-Inf Inf] for full file.
+        %   'units':      What units for the time input, either seconds or
+        %                   datapoints (defaults to seconds)
+        %   'downsample': Read every specified data point to downsample 
+        %                   (e.g. 3 will read every 3rd data point)
+        %                   Defaults to 1, for no downsampling.
+        %
+        % Set NSxFile.useRAM to false if you want to read a subset of the
+        % file and the file is larger than your available RAM (slower, but
+        % can avoid out-of-memory errors)
             if ~obj.isOpen
                 error('File has already been closed, reopen to read data')
             end
@@ -176,7 +200,40 @@ classdef NSxFile < handle
         end
         
         function detectSpikes(obj,varargin)
-        % Extract spikes from the data for spike sorting
+        % Extract spikes from the data. Defaults to running on all channels
+        % that have already been read, using the .read() method. Stores the
+        % detected spikes and meta-info in NSxFile.spikes(channelNumber).
+        % Inputs are name, value pairs:
+        %
+        %   'threshold':   what multiple of the MAD-estimate of SD to use
+        %                   (median(abs(MUA)/0.6745; see Quian Quiroga et
+        %                   al., 2004 for explanation).
+        %                   If negative, will detect troughs ("negative
+        %                   peaks"), if positive will detect peaks.
+        %                   Defaults to -4
+        %   'bandpass':    frequency band to filter between before spike
+        %                   detection, in Hz. Defaults to [300 5000]
+        %   'filterType':  type of filter to use, FIR of Butter. Defaults
+        %                   to FIR.
+        %   'filterOrder': order of filter to use. Defaults to 1024. Note
+        %                   that Butterworth filter orders are poles, while
+        %                   FIR are zeros, and Butterworth should have a
+        %                   much lower order, e.g. 2 or 4.
+        %   'blank':       [1 x 2] array of times (in seconds) to ignore
+        %                   during both the threshold calculation and spike
+        %                   extraction. Useful for blanking seizures.
+        %                   Defaults to [], i.e. not blanking anything.
+        %   'channels':    which channel numbers to run detection on,
+        %                   defaults to all currently loaded channels, will
+        %                   warn you if a user-specified channel hasn't
+        %                   been read yet, but not do anything about it.
+        %   'maxThresh':   hard-coded value in µV beyond which to discard
+        %                   as noise (defaults to 1000 µV)
+        %   'window':      window in milliseconds around each detection to
+        %                   store as a waveform. [1 x 2] so window(1) is
+        %                   milliseconds to start storage from and 
+        %                   window(2) is milliseconds to store until.
+        %                   Defaults to [-0.6 1];
             if isempty(obj.data)
                 error('Need to read data from the file first')
             end
@@ -186,7 +243,7 @@ classdef NSxFile < handle
             end
             
             settings = [];
-            settings.threshold = 4.5;
+            settings.threshold = -4;
             settings.bandpass = [300 5000];
             settings.filterType = 'FIR';
             settings.filterOrder = 1024;
@@ -238,12 +295,13 @@ classdef NSxFile < handle
                         mask(round(settings.blank(1)*obj.Fs):round(settings.blank(2)*obj.Fs)) = 0;
                     end
                     rqq = median(abs(mua(mask == 1))/0.6745);
-                    obj.spikes(settings.channels(c)).threshold = -rqq * settings.threshold;
+                    obj.spikes(settings.channels(c)).threshold = rqq * settings.threshold;
                     
                     obj.spikes(settings.channels(c)).sd = single(std(mua(mask == 1)));
                     obj.spikes(settings.channels(c)).duration = single(length(mua)/obj.Fs);
                     
-                    [~,locs] = findpeaks(-mua,'minpeakheight',-obj.spikes(settings.channels(c)).threshold);
+                    direction = settings.threshold/abs(settings.threshold); % find out if threshold is -ve or +ve
+                    [~,locs] = findpeaks(direction * mua,'minpeakheight',direction * obj.spikes(settings.channels(c)).threshold);
                     
                     pre = floor(settings.window(1)*(obj.Fs/1e3));
                     post = ceil(settings.window(2)*(obj.Fs/1e3));
@@ -281,7 +339,12 @@ classdef NSxFile < handle
         end
         
         function spikes = exportSpikesUMS(obj,varargin)
-        % Export the detected spikes into UMS2000 style structs
+        % Export the detected spikes into UMS2000 style structs. Only input
+        % at present is 'channels', to set a subset of detected spikes to
+        % export by channel number. Defaults to all channels that have been
+        % read. Will automatically run spike detection on any channels that
+        % haven't been processed yet, with default settings in detectSpikes
+        % method. Returns the requested data in a struct array.
             if ~exist('ss_default_params.m','file')
                 error('Need the UltraMegaSort2000 toolbox on the path to export in their data format')
             end

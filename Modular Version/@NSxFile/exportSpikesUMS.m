@@ -1,5 +1,10 @@
 function spikes = exportSpikesUMS(obj,varargin)
-% Export the detected spikes into UMS2000 style structs
+% Export the detected spikes into UMS2000 style structs. Only input
+% at present is 'channels', to set a subset of detected spikes to
+% export by channel number. Defaults to all channels that have been
+% read. Will automatically run spike detection on any channels that
+% haven't been processed yet, with default settings in detectSpikes
+% method. Returns the requested data in a struct array.
 if ~exist('ss_default_params.m','file')
     error('Need the UltraMegaSort2000 toolbox on the path to export in their data format')
 end

@@ -1,5 +1,30 @@
 function read(obj,varargin)
-% read a channel (or all channels) for a specific time (or all times)
+% Read a channel (or all channels) for a specific time (or all 
+% times)
+% Loads the data into the object, as a cell array, so that the data
+% structure is the same regardless of whether a file contains
+% paused data. The data are stored in NSxFile.data
+%
+% Will default to reading all channels and the whole file if called
+% with no input arguments. Available inputs (name, value pairs)
+% are:
+%
+%   'channels':   array of channel numbers to read. If empty, will 
+%                   read all (default)
+%   'channel':    duplicate of 'channels', holdover from previous
+%                   version.
+%   'time':       [1 x 2] array for the start and stop time to read 
+%                   from the file (see below for changing units).
+%                   Defaults to [-Inf Inf] for full file.
+%   'units':      What units for the time input, either seconds or
+%                   datapoints (defaults to seconds)
+%   'downsample': Read every specified data point to downsample 
+%                   (e.g. 3 will read every 3rd data point)
+%                   Defaults to 1, for no downsampling.
+%
+% Set NSxFile.useRAM to false if you want to read a subset of the
+% file and the file is larger than your available RAM (slower, but
+% can avoid out-of-memory errors)
 if ~obj.isOpen
     error('File has already been closed, reopen to read data')
 end

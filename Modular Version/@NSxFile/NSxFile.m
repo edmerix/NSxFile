@@ -68,6 +68,7 @@ classdef NSxFile < handle
     end
     
     properties (SetAccess = private, Hidden = true)
+        cleanup
         fid = -1
         isOpen = false
         isPaused = false
@@ -92,6 +93,7 @@ classdef NSxFile < handle
         function obj = NSxFile(varargin)
         % Constructor method.
         % Run NSXFile.help for more info.
+            obj.cleanup = onCleanup(@()delete(obj));
             allowable = fieldnames(obj);
             if mod(length(varargin),2) ~= 0
                 error('Inputs must be in name, value pairs');
@@ -123,8 +125,10 @@ classdef NSxFile < handle
         open(obj,filename);
         read(obj,varargin);
         close(obj);
+        %filter(obj,varargin);
         detectSpikes(obj,varargin);
         spikes = exportSpikesUMS(obj,varargin);
+        hfig = plot(obj,varargin);
         
     end
     

@@ -67,6 +67,7 @@ classdef NSxFile < handle
     end
     
     properties (SetAccess = private, Hidden = true)
+        cleanup
         fid = -1
         isOpen = false
         isPaused = false
@@ -85,6 +86,7 @@ classdef NSxFile < handle
     methods
         function obj = NSxFile(varargin)
         % This is the constructor. Run NSXFile.help for more info.
+            obj.cleanup = onCleanup(@()delete(obj));
             allowable = fieldnames(obj);
             if mod(length(varargin),2) ~= 0
                 error('Inputs must be in name, value pairs');

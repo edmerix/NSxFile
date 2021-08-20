@@ -126,6 +126,7 @@ classdef NSxFile < handle
         read(obj,varargin);
         close(obj);
         %filter(obj,varargin);
+        commonReref(obj,varargin);
         detectSpikes(obj,varargin);
         spikes = exportSpikesUMS(obj,varargin);
         hfig = plot(obj,varargin);

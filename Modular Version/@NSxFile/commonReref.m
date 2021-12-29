@@ -19,19 +19,19 @@ for d = 1:length(obj.data)
     obj.data{d} = obj.data{d} - nanmean(obj.data{d},2);
 end
 
-if settings.groupSize < length(obj.electrodelabels)
-    banks = obj.electrodelabels;
+if settings.groupSize < length(obj.electrodeLabels)
+    banks = obj.electrodeLabels;
     for b = 1:length(banks)
         banks{b}(regexp(banks{b},'[\d]')) = [];
     end
     bank_opts = unique(banks);
-    grps = zeros(1,length(obj.electrodelabels));
+    grps = zeros(1,length(obj.electrodeLabels));
 
     disp(['Found ' num2str(length(bank_opts)) ' banks:'])
     for b = 1:length(bank_opts)
         disp([9 'Bank "' bank_opts{b} '":'])
         grps(strcmp(banks,bank_opts{b})) = b;
-        disp([9 9 strjoin(obj.electrodelabels(grps == b),'\n\t\t')]);
+        disp([9 9 strjoin(obj.electrodeLabels(grps == b),'\n\t\t')]);
         if length(find(grps == b)) == settings.groupSize
             disp([9 9 'Subtracting mean now...'])
             for d = 1:length(obj.data)
@@ -45,9 +45,9 @@ if settings.groupSize < length(obj.electrodelabels)
     end
 else
     disp('Subtracting mean of all channels, ignoring channels in ''ignoreElectrodes'' field')
-    bueno = ones(1,length(obj.electrodelabels));
+    bueno = ones(1,length(obj.electrodeLabels));
     for i = 1:length(settings.ignoreElectrodes)
-        bueno(strcmpi(obj.electrodelabels,settings.ignoreElectrodes{i})) = 0;
+        bueno(strcmpi(obj.electrodeLabels,settings.ignoreElectrodes{i})) = 0;
     end
     for d = 1:length(obj.data)
         mnVal = nanmean(obj.data{d}(bueno,:));
@@ -60,12 +60,12 @@ if settings.convertUnits
     % note that this will run afoul if no electrode labels, just channel 
     % numbers, which I think happens on old CKI files, but then they don't 
     % need dividing anyway.
-    for e = 1:length(obj.electrodelabels)
-        if ~isempty(obj.electrodeinfo)
-            overRes = double(obj.electrodeinfo(e).DigitalRange(2)) ...
-                / double(obj.electrodeinfo(e).AnalogRange(2));
+    for e = 1:length(obj.electrodeLabels)
+        if ~isempty(obj.electrodeInfo)
+            overRes = double(obj.electrodeInfo(e).DigitalRange(2)) ...
+                / double(obj.electrodeInfo(e).AnalogRange(2));
             if overRes ~= round(overRes)
-                disp(['Electrode ' obj.electrodelabels{e} ...
+                disp(['Electrode ' obj.electrodeLabels{e} ...
                     ' has a weird digital:analog ratio (' ...
                     num2str(overRes) '), not converting to uV']);
             else

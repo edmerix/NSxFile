@@ -26,8 +26,8 @@ function detectSpikes(obj,varargin)
 %                   defaults to all currently loaded channels, will
 %                   warn you if a user-specified channel hasn't
 %                   been read yet, but not do anything about it.
-%   'maxThresh':   hard-coded value in µV beyond which to discard
-%                   as noise (defaults to 1000 µV)
+%   'maxThresh':   hard-coded value in ï¿½V beyond which to discard
+%                   as noise (defaults to 1000 ï¿½V)
 %   'window':      window in milliseconds around each detection to
 %                   store as a waveform. [1 x 2] so window(1) is
 %                   milliseconds to start storage from and 
@@ -78,9 +78,9 @@ for c = 1:length(settings.channels)
         mua = filtfilt(b,a,double(raw(ind,:)));
         clear raw
         
-        if ~isempty(obj.electrodeinfo)
-            overRes = double(obj.electrodeinfo(ind).DigitalRange(2)) ...
-                / double(obj.electrodeinfo(ind).AnalogRange(2));
+        if ~isempty(obj.electrodeInfo)
+            overRes = double(obj.electrodeInfo(ind).DigitalRange(2)) ...
+                / double(obj.electrodeInfo(ind).AnalogRange(2));
             if overRes ~= round(overRes)
                 warning(['Channel ' num2str(settings.channels(c)) ...
                     ' has a weird digital:analog ratio (' ...

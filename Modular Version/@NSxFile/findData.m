@@ -1,7 +1,7 @@
 function findData(obj)
 % Actually find the data within the binary file
 fseek(obj.fid, obj.headerEnd, 'bof');
-switch obj.MetaTags.FileTypeID
+switch obj.metaTags.FileTypeID
     case 'NEURALSG'
         obj.dataStart = obj.headerEnd;
         obj.dataEnd = obj.fileEnd;
@@ -22,20 +22,20 @@ switch obj.MetaTags.FileTypeID
             end
 
             segmentCount = segmentCount + 1;
-            if strcmp(obj.MetaTags.FileTypeID, 'BRSMPGRP')
+            if strcmp(obj.metaTags.FileTypeID, 'BRSMPGRP')
                 startTimeStamp = fread(obj.fid, 1, 'uint64');
             else
                 startTimeStamp = fread(obj.fid, 1, 'uint32');
             end
 
-            obj.MetaTags.Timestamp(segmentCount) = startTimeStamp;
+            obj.metaTags.Timestamp(segmentCount) = startTimeStamp;
             obj.datapoints(segmentCount) = fread(obj.fid, 1, 'uint32');
             obj.dataStart(segmentCount) = double(ftell(obj.fid));
             fseek(obj.fid, obj.datapoints(segmentCount) * obj.channels * 2, 'cof');
             obj.dataEnd(segmentCount) = double(ftell(obj.fid));
         end
     otherwise
-        error(['Don''t even know how you got here, but not sure what this file type is: ' obj.MetaTags.FileTypeID])
+        error(['Don''t even know how you got here, but not sure what this file type is: ' obj.metaTags.FileTypeID])
 end
 obj.duration = obj.datapoints/obj.Fs;
 if length(obj.datapoints) > 1

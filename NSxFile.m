@@ -6,16 +6,16 @@
 %
 %   Open a file: (quickly reads header info, stores handle to data)
 %       <a href="matlab:nsx.open('filename.ns5');">nsx.open('filename.ns5');</a>
-%   
+%
 %   As a shorthand, the above can be compressed into:
 %       <a href="matlab:nsx = NSxFile('filename','filename.ns5');">nsx = NSxFile('filename','filename.ns5');</a>
 %
 %   At this point, "nsx" contains multiple properties, including:
 %       Fs:              Sampling frequency
 %       date:            Date as stored in the file
-%       date_local:      Date converted to local time (set nsx.timezone
+%       dateLocal:      Date converted to local time (set nsx.timezone
 %                        first, according to where the file was recorded)
-%       electrodelabels: Labels for each channel
+%       electrodeLabels: Labels for each channel
 %
 %   (See <a href="matlab:properties('NSxFile')">properties('NSxFile')</a> for full list)
 %
@@ -23,7 +23,7 @@
 %       <a href="matlab:nsx.read('channel',5,'time',[300 700]);">nsx.read('channel',5,'time',[300 700]);</a>
 %   Or read in all the data:
 %       <a href="matlab:nsx.read();">nsx.read();</a>
-%   The nsx variable has now populated the nsx.data subfield with the 
+%   The nsx variable has now populated the nsx.data subfield with the
 %   requested data. The data are always held in a cell, so that there is no
 %   difference between handling files with and without pauses.
 %
@@ -49,40 +49,39 @@
 %   E. M. Merricks, Ph.D. 2020-03-07 <INLINE_VERSION>
 classdef NSxFile < handle
     properties
-        filename            char
-        data        (1,:)   cell
-        spikes      (1,:)   struct
-        MetaTags            struct
-        Fs          (1,1)   double
-        date                datetime
-        date_local          datetime
-        timezone            char        = 'America/New_York';
-        duration    (1,:)   double
-        datapoints  (1,:)   double
-        channels    (1,1)   double
-        electrodelabels     cell
-        electrodeinfo       struct
-        useRAM      (1,1)   logical     = true
-        verbose     (1,1)   logical     = false
+        filename                char
+        data            (1,:)   cell
+        spikes          (1,:)   struct
+        metaTags                struct
+        Fs              (1,1)   double
+        date                    datetime
+        dateLocal               datetime
+        timezone                char        = 'America/New_York';
+        duration        (1,:)   double
+        datapoints      (1,:)   double
+        channels        (1,1)   double
+        loadedChannels  (1,:)   double
+        electrodeLabels         cell
+        electrodeInfo           struct
+        useRAM          (1,1)   logical     = true
+        verbose         (1,1)   logical     = false
     end
-    
+
     properties (SetAccess = private, Hidden = true)
         cleanup
         fid = -1
         isOpen = false
         isPaused = false
         extHdrLngth = 66;
-        
+
         headerEnd = NaN
         fileEnd = NaN
         dataStart = NaN
         dataEnd = NaN
-        
-        loadedChannels = []
-        
+
         readSettings = struct()
     end
-    
+
     methods
         function obj = NSxFile(varargin)
         % This is the constructor. Run NSXFile.help for more info.
@@ -98,12 +97,12 @@ classdef NSxFile < handle
                     disp([9 'Not assigning ''' varargin{v} ''': not a property of NSxFile object']);
                 end
             end
-            
+
             if ~isempty(obj.filename)
                 obj.open(obj.filename);
             end
         end
-        
+
         function open(obj,filename)
         % Opens the designated filename within the NSxFile object.
         % Takes one argument: the filename (including file path if not
@@ -123,9 +122,9 @@ classdef NSxFile < handle
             obj.isOpen = true;
             obj.readHeader();
         end
-        
+
         function read(obj,varargin)
-        % Read a channel (or all channels) for a specific time (or all 
+        % Read a channel (or all channels) for a specific time (or all
         % times)
         % Loads the data into the object, as a cell array, so that the data
         % structure is the same regardless of whether a file contains
@@ -135,16 +134,16 @@ classdef NSxFile < handle
         % with no input arguments. Available inputs (name, value pairs)
         % are:
         %
-        %   'channels':   array of channel numbers to read. If empty, will 
+        %   'channels':   array of channel numbers to read. If empty, will
         %                   read all (default)
         %   'channel':    duplicate of 'channels', holdover from previous
         %                   version.
-        %   'time':       [1 x 2] array for the start and stop time to read 
+        %   'time':       [1 x 2] array for the start and stop time to read
         %                   from the file (see below for changing units).
         %                   Defaults to [-Inf Inf] for full file.
         %   'units':      What units for the time input, either seconds or
         %                   datapoints (defaults to seconds)
-        %   'downsample': Read every specified data point to downsample 
+        %   'downsample': Read every specified data point to downsample
         %                   (e.g. 3 will read every 3rd data point)
         %                   Defaults to 1, for no downsampling.
         %
@@ -157,22 +156,22 @@ classdef NSxFile < handle
             if isnan(obj.headerEnd) || obj.headerEnd < obj.extHdrLngth
                 error('Haven''t managed to find the end of the header data')
             end
-            
+
             settings.channel = -1;
             settings.channels = []; % 'channels' is more routinely used outside this function, so allow both
             settings.time = [-Inf Inf];
             settings.units = 's';
             settings.downsample = 1; % read every nth data point
-            
+
             settings = obj.parseInputs(varargin,settings);
-            
+
             % If settings.channels isn't empty and settings.channel isn't the same,
             % then the user supplied 'channels' instead of 'channel', so use that
             % instead:
             if ~isempty(settings.channels) && ~isequal(settings.channel, settings.channels)
                 settings.channel = settings.channels;
             end
-            
+
             switch settings.units
                 case  {'s','seconds','sec','secs'}
                     minTime = 0;
@@ -183,14 +182,14 @@ classdef NSxFile < handle
                 otherwise
                     error(['Unknown units for data read timings: ' settings.units])
             end
-            
+
             settings.time(1) = max(settings.time(1),minTime);
             settings.time(2) = min(settings.time(2),maxTime);
-            
+
             if settings.channel < 1
                 settings.channel = 1:obj.channels;
             end
-            
+
             obj.readSettings = settings;
             obj.calculateSegments();
             if obj.verbose
@@ -200,7 +199,7 @@ classdef NSxFile < handle
             end
             obj.readData();
         end
-        
+
         function detectSpikes(obj,varargin)
         % Extract spikes from the data. Defaults to running on all channels
         % that have already been read, using the .read() method. Stores the
@@ -229,21 +228,21 @@ classdef NSxFile < handle
         %                   defaults to all currently loaded channels, will
         %                   warn you if a user-specified channel hasn't
         %                   been read yet, but not do anything about it.
-        %   'maxThresh':   hard-coded value in µV beyond which to discard
-        %                   as noise (defaults to 1000 µV)
+        %   'maxThresh':   hard-coded value in uV beyond which to discard
+        %                   as noise (defaults to 1000 uV)
         %   'window':      window in milliseconds around each detection to
         %                   store as a waveform. [1 x 2] so window(1) is
-        %                   milliseconds to start storage from and 
+        %                   milliseconds to start storage from and
         %                   window(2) is milliseconds to store until.
         %                   Defaults to [-0.6 1];
             if isempty(obj.data)
                 error('Need to read data from the file first')
             end
-            
+
             if obj.Fs < 2e4
                 error('Need a high sampling frequency file to run spike detection and sorting');
             end
-            
+
             settings = [];
             settings.threshold = -4;
             settings.bandpass = [300 5000];
@@ -253,9 +252,9 @@ classdef NSxFile < handle
             settings.channels = obj.loadedChannels;
             settings.maxThresh = 1e3;
             settings.window = [-0.6 1]; % in milliseconds
-            
+
             settings = obj.parseInputs(varargin,settings);
-            
+
             switch settings.filterType
                 case {'fir','FIR'}
                     [b,a] = fir1(settings.filterOrder,settings.bandpass/(obj.Fs/2));
@@ -264,7 +263,7 @@ classdef NSxFile < handle
                 otherwise
                     error(['Unknown filter type: ' settings.filterType])
             end
-            
+
             for c = 1:length(settings.channels)
                 obj.spikes(settings.channels(c)).loaded = false;
                 obj.spikes(settings.channels(c)).channel = settings.channels(c);
@@ -280,10 +279,10 @@ classdef NSxFile < handle
                     raw = cell2mat(obj.data);
                     mua = filtfilt(b,a,double(raw(ind,:)));
                     clear raw
-                    
-                    if ~isempty(obj.electrodeinfo)
-                        overRes = double(obj.electrodeinfo(ind).DigitalRange(2)) ...
-                            / double(obj.electrodeinfo(ind).AnalogRange(2));
+
+                    if ~isempty(obj.electrodeInfo)
+                        overRes = double(obj.electrodeInfo(ind).DigitalRange(2)) ...
+                            / double(obj.electrodeInfo(ind).AnalogRange(2));
                         if overRes ~= round(overRes)
                             warning(['Channel ' num2str(settings.channels(c)) ...
                                 ' has a weird digital:analog ratio (' ...
@@ -291,45 +290,45 @@ classdef NSxFile < handle
                         end
                         mua = mua/overRes;
                     end
-                    
+
                     mask = ones(1,length(mua));
                     if ~isempty(settings.blank)
                         mask(round(settings.blank(1)*obj.Fs):round(settings.blank(2)*obj.Fs)) = 0;
                     end
                     rqq = median(abs(mua(mask == 1))/0.6745);
                     obj.spikes(settings.channels(c)).threshold = rqq * settings.threshold;
-                    
+
                     obj.spikes(settings.channels(c)).sd = single(std(mua(mask == 1)));
                     obj.spikes(settings.channels(c)).duration = single(length(mua)/obj.Fs);
-                    
+
                     direction = settings.threshold/abs(settings.threshold); % find out if threshold is -ve or +ve
                     [~,locs] = findpeaks(direction * mua,'minpeakheight',direction * obj.spikes(settings.channels(c)).threshold);
-                    
+
                     pre = floor(settings.window(1)*(obj.Fs/1e3));
                     post = ceil(settings.window(2)*(obj.Fs/1e3));
-                    
+
                     locs(locs-pre < 1 | locs+post > length(mua)) = [];
                     % don't include the spikes that were within the blanking period:
                     if ~isempty(settings.blank)
                         locs(locs >= settings.blank(1)*obj.Fs & locs < settings.blank(2)*obj.Fs) = [];
                     end
-                    
+
                     spkwin = pre:post;
                     spks = zeros(length(spkwin),length(locs));
-                    
+
                     for t = 1:length(locs)
                         spks(:,t) = mua(locs(t)+spkwin);
                     end
                     spkt = locs;
-                    
+
                     % remove the overly large ones:
                     [~,j] = ind2sub(size(spks),find(abs(spks) > settings.maxThresh));
                     j = unique(j);
                     spks(:,j) = [];
                     spkt(j) = [];
-                    
+
                     spkt = spkt/obj.Fs;
-                    
+
                     obj.spikes(settings.channels(c)).waveforms = spks';
                     obj.spikes(settings.channels(c)).spiketimes = single(spkt);
                     obj.spikes(settings.channels(c)).window = settings.window;
@@ -339,7 +338,7 @@ classdef NSxFile < handle
                 end
             end
         end
-        
+
         function spikes = exportSpikesUMS(obj,varargin)
         % Export the detected spikes into UMS2000 style structs. Only input
         % at present is 'channels', to set a subset of detected spikes to
@@ -351,14 +350,14 @@ classdef NSxFile < handle
                 error('Need the UltraMegaSort2000 toolbox on the path to export in their data format')
             end
             settings.channels = obj.loadedChannels;
-            
+
             settings = obj.parseInputs(varargin,settings);
-            
+
             % Required for preallocation. Kinda annoying. Because it's a
             % struct array, of a different type than this class, it doesn't
             % like other preallocation methods:
             spikes = cell(1,length(settings.channels));
-            
+
             for c = 1:length(settings.channels)
                 if length(obj.spikes) < c ...
                         || ~isfield(obj.spikes(c),'loaded') ...
@@ -391,12 +390,33 @@ classdef NSxFile < handle
             spikes = [spikes{:}];
         end
         
+        % TEMPORARY FUNCTIONS TO SEMI-DUPLICATE OLD NAMING VERSIONS:
+        function res = electrodelabels(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodelabels" will be deprecated in a future release, please use "electrodeLabels" instead')
+            res = obj.electrodeLabels;
+        end
+
+        function res = electrodeinfo(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodeinfo" will be deprecated in a future release, please use "electrodeInfo" instead')
+            res = obj.electrodeInfo;
+        end
+
+        function res = date_local(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "date_local" will be deprecated in a future release, please use "dateLocal" instead')
+            res = obj.dateLocal;
+        end
+
+        function res = MetaTags(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "MetaTags" will be deprecated in a future release, please use "metaTags" instead')
+            res = obj.metaTags;
+        end
+
         function close(obj)
         % close handle to file (use when done loading specific data etc.)
             fclose(obj.fid);
             obj.isOpen = false;
         end
-        
+
         function delete(obj)
         % Destructor method
             if obj.isOpen
@@ -404,94 +424,94 @@ classdef NSxFile < handle
             end
         end
     end
-    
+
     methods (Access = protected, Hidden = true)
         function readHeader(obj)
         % Read the header from the file
             if obj.fid < 0 || ~obj.isOpen
                 error('No file is open, cannot read header');
             end
-            obj.MetaTags = struct();
-            obj.MetaTags.FileTypeID = fread(obj.fid, [1,8], '*char');
-            switch obj.MetaTags.FileTypeID
+            obj.metaTags = struct();
+            obj.metaTags.FileTypeID = fread(obj.fid, [1,8], '*char');
+            switch obj.metaTags.FileTypeID
                 case 'NEURALSG'
-                    obj.MetaTags.FileSpec       = '2.1';
-                    obj.MetaTags.SamplingLabel  = deblank(fread(obj.fid, [1,16], '*char'));
-                    obj.MetaTags.TimeRes        = 30000;
-                    obj.Fs                      = obj.MetaTags.TimeRes/fread(obj.fid, 1, 'uint32=>double');
+                    obj.metaTags.FileSpec       = '2.1';
+                    obj.metaTags.SamplingLabel  = deblank(fread(obj.fid, [1,16], '*char'));
+                    obj.metaTags.TimeRes        = 30000;
+                    obj.Fs                      = obj.metaTags.TimeRes/fread(obj.fid, 1, 'uint32=>double');
                     obj.channels                = double(fread(obj.fid, 1, 'uint32=>double'));
-                    obj.MetaTags.ChannelID      = fread(obj.fid, [obj.channels 1], '*uint32');
+                    obj.metaTags.ChannelID      = fread(obj.fid, [obj.channels 1], '*uint32');
                 case 'NEURALCD'
                     mainHeader = fread(obj.fid, 306, '*uint8');
-                    
-                    obj.MetaTags.FileSpec       = [num2str(double(mainHeader(1))) '.' num2str(double(mainHeader(2)))];
-                    obj.MetaTags.SamplingLabel  = deblank(char(mainHeader(7:22))');
-                    obj.MetaTags.Comment        = deblank(char(mainHeader(23:278))');
-                    obj.MetaTags.TimeRes        = double(typecast(mainHeader(283:286), 'uint32'));
-                    obj.Fs                      = obj.MetaTags.TimeRes / double(typecast(mainHeader(279:282), 'uint32'));
+
+                    obj.metaTags.FileSpec       = [num2str(double(mainHeader(1))) '.' num2str(double(mainHeader(2)))];
+                    obj.metaTags.SamplingLabel  = deblank(char(mainHeader(7:22))');
+                    obj.metaTags.Comment        = deblank(char(mainHeader(23:278))');
+                    obj.metaTags.TimeRes        = double(typecast(mainHeader(283:286), 'uint32'));
+                    obj.Fs                      = obj.metaTags.TimeRes / double(typecast(mainHeader(279:282), 'uint32'));
                     t                           = double(typecast(mainHeader(287:302), 'uint16'));
                     obj.channels                = double(typecast(mainHeader(303:306), 'uint32'));
-                    
-                    obj.MetaTags.Comment(find(obj.MetaTags.Comment==0,1):end) = 0;
-                    
+
+                    obj.metaTags.Comment(find(obj.metaTags.Comment==0,1):end) = 0;
+
                     tFormat = t([1 2 4:7])';
                     tFormat(end) = tFormat(end) + t(8)/1e3;
-                    
+
                     tempdate = datetime(tFormat,'TimeZone','UTC');
                     tempdate.Format = 'yyyy/MM/dd HH:mm:ss.SSS Z';
                     obj.date = tempdate;
                     localtime = tempdate;
                     localtime.TimeZone = obj.timezone;
-                    obj.date_local = localtime;
-                    
+                    obj.dateLocal = localtime;
+
                     readSize = double(obj.channels * obj.extHdrLngth);
                     extendedHeader = fread(obj.fid, readSize, '*uint8');
                     obj.parseExtendedHeader(extendedHeader);
                 otherwise
-                    error(['Unkonwn file type: ' obj.MetaTags.FileTypeID])
+                    error(['Unkonwn file type: ' obj.metaTags.FileTypeID])
             end
             obj.headerEnd = double(ftell(obj.fid));
             fseek(obj.fid, 0, 'eof');
             obj.fileEnd = double(ftell(obj.fid));
-            
+
             obj.findData();
         end
-        
+
         function parseExtendedHeader(obj,extHdr)
         % Sort out the extended header data if the file has any
-            obj.electrodeinfo = struct();
-            obj.electrodelabels = cell(1,obj.channels);
+            obj.electrodeInfo = struct();
+            obj.electrodeLabels = cell(1,obj.channels);
             filtTypes = {'None','Butterworth'};
             for i = 1:obj.channels
                 offset = double((i-1)*obj.extHdrLngth);
-                obj.electrodeinfo(i).Type = char(extHdr((1:2)+offset))';
-                
-                if ~strcmpi(obj.electrodeinfo(i).Type, 'CC')
+                obj.electrodeInfo(i).Type = char(extHdr((1:2)+offset))';
+
+                if ~strcmpi(obj.electrodeInfo(i).Type, 'CC')
                     warning(['Attempted to read extended header on channel' num2str(i) ', but electrode type was not CC'])
                 else
-                    obj.electrodeinfo(i).ElectrodeID        = typecast(extHdr((3:4)+offset), 'uint16');
-                    obj.electrodelabels{i}                  = deblank(char(extHdr((5:20)+offset))');
-                    obj.electrodeinfo(i).ConnectorBank      = deblank(char(extHdr(21+offset) + ('A' - 1)));
-                    obj.electrodeinfo(i).ConnectorPin       = extHdr(22+offset);
-                    obj.electrodeinfo(i).DigitalRange(1)    = typecast(extHdr((23:24)+offset), 'int16');
-                    obj.electrodeinfo(i).DigitalRange(2)    = typecast(extHdr((25:26)+offset), 'int16');
-                    obj.electrodeinfo(i).AnalogRange(1)     = typecast(extHdr((27:28)+offset), 'int16');
-                    obj.electrodeinfo(i).AnalogRange(2)     = typecast(extHdr((29:30)+offset), 'int16');
-                    obj.electrodeinfo(i).AnalogUnits        = deblank(char(extHdr((31:46)+offset))');
-                    obj.electrodeinfo(i).HighFreqCorner     = typecast(extHdr((47:50)+offset), 'uint32');
-                    obj.electrodeinfo(i).HighFreqOrder      = typecast(extHdr((51:54)+offset), 'uint32');
-                    obj.electrodeinfo(i).HighFilterType     = filtTypes{typecast(extHdr((55:56)+offset), 'uint16')+1};
-                    obj.electrodeinfo(i).LowFreqCorner      = typecast(extHdr((57:60)+offset), 'uint32');
-                    obj.electrodeinfo(i).LowFreqOrder       = typecast(extHdr((61:64)+offset), 'uint32');
-                    obj.electrodeinfo(i).LowFilterType      = filtTypes{typecast(extHdr((65:66)+offset), 'uint16')+1};
+                    obj.electrodeInfo(i).ElectrodeID        = typecast(extHdr((3:4)+offset), 'uint16');
+                    obj.electrodeLabels{i}                  = deblank(char(extHdr((5:20)+offset))');
+                    obj.electrodeInfo(i).ConnectorBank      = deblank(char(extHdr(21+offset) + ('A' - 1)));
+                    obj.electrodeInfo(i).ConnectorPin       = extHdr(22+offset);
+                    obj.electrodeInfo(i).DigitalRange(1)    = typecast(extHdr((23:24)+offset), 'int16');
+                    obj.electrodeInfo(i).DigitalRange(2)    = typecast(extHdr((25:26)+offset), 'int16');
+                    obj.electrodeInfo(i).AnalogRange(1)     = typecast(extHdr((27:28)+offset), 'int16');
+                    obj.electrodeInfo(i).AnalogRange(2)     = typecast(extHdr((29:30)+offset), 'int16');
+                    obj.electrodeInfo(i).AnalogUnits        = deblank(char(extHdr((31:46)+offset))');
+                    obj.electrodeInfo(i).HighFreqCorner     = typecast(extHdr((47:50)+offset), 'uint32');
+                    obj.electrodeInfo(i).HighFreqOrder      = typecast(extHdr((51:54)+offset), 'uint32');
+                    obj.electrodeInfo(i).HighFilterType     = filtTypes{typecast(extHdr((55:56)+offset), 'uint16')+1};
+                    obj.electrodeInfo(i).LowFreqCorner      = typecast(extHdr((57:60)+offset), 'uint32');
+                    obj.electrodeInfo(i).LowFreqOrder       = typecast(extHdr((61:64)+offset), 'uint32');
+                    obj.electrodeInfo(i).LowFilterType      = filtTypes{typecast(extHdr((65:66)+offset), 'uint16')+1};
                 end
             end
         end
-        
+
         function findData(obj)
         % Actually find the data within the binary file
             fseek(obj.fid, obj.headerEnd, 'bof');
-            switch obj.MetaTags.FileTypeID
+            switch obj.metaTags.FileTypeID
                 case 'NEURALSG'
                     obj.dataStart = obj.headerEnd;
                     obj.dataEnd = obj.fileEnd;
@@ -503,36 +523,36 @@ classdef NSxFile < handle
                             % Blackrock need to fix this in the original
                             % NPMK/data structure...
                             disp([9 'Duration read issue after segment ' num2str(segmentCount) ', calculating full data points'])
-                            
+
                             disp([9 9 'Position was ' num2str(double(ftell(obj.fid)))])
                             disp([9 9 'End of file was ' num2str(obj.fileEnd)])
-                            
+
                             obj.datapoints = double(obj.fileEnd - obj.dataStart)/(obj.channels * 2);
                             break;
                         end
-                        
+
                         segmentCount = segmentCount + 1;
-                        if strcmp(obj.MetaTags.FileTypeID, 'BRSMPGRP')
+                        if strcmp(obj.metaTags.FileTypeID, 'BRSMPGRP')
                             startTimeStamp = fread(obj.fid, 1, 'uint64');
                         else
                             startTimeStamp = fread(obj.fid, 1, 'uint32');
                         end
-                        
-                        obj.MetaTags.Timestamp(segmentCount) = startTimeStamp;
+
+                        obj.metaTags.Timestamp(segmentCount) = startTimeStamp;
                         obj.datapoints(segmentCount) = fread(obj.fid, 1, 'uint32');
                         obj.dataStart(segmentCount) = double(ftell(obj.fid));
                         fseek(obj.fid, obj.datapoints(segmentCount) * obj.channels * 2, 'cof');
                         obj.dataEnd(segmentCount) = double(ftell(obj.fid));
                     end
                 otherwise
-                    error(['Don''t even know how you got here, but not sure what this file type is: ' obj.MetaTags.FileTypeID])
+                    error(['Don''t even know how you got here, but not sure what this file type is: ' obj.metaTags.FileTypeID])
             end
             obj.duration = obj.datapoints/obj.Fs;
             if length(obj.datapoints) > 1
                 obj.isPaused = true;
             end
         end
-        
+
         function calculateSegments(obj)
         % work out which segments the user-requested time points lie in
             switch obj.readSettings.units
@@ -554,7 +574,7 @@ classdef NSxFile < handle
             end
             obj.readSettings.lastSegment = post + 1;
         end
-        
+
         function readData(obj)
         % Actually read the data based on the readSettings calculated
             chan = obj.readSettings.channel;
@@ -573,19 +593,19 @@ classdef NSxFile < handle
                 disp([9 'Reading channel ' num2str(chan) ' from ' num2str(readFrom) ' to ' num2str(readTo) ' (datapoints)'])
             end
             segs = obj.readSettings.firstSegment:obj.readSettings.lastSegment;
-            
+
             % Need to know where to read from and to within each data seg:
             innerReads = [
                 zeros(1,length(segs));
                 obj.datapoints(segs)
             ]';
-            
+
             % The first segment needs to be read from the user's input time
             innerReads(1,1) = readFrom - 1;
             % the last segment needs only be read until the user's input time
             innerReads(end,end) = readTo - sum(obj.datapoints(segs(1:end-1)));
             % (everything in between is read completely)
-            
+
             if obj.useRAM
                 chanlist = 1:obj.channels;
                 skipsize = 0;
@@ -595,7 +615,7 @@ classdef NSxFile < handle
                 skipsize = double((obj.channels-length(chan))*2);
                 startPoint = min(chan)-1;
             end
-            
+
             obj.data = cell(1,length(segs));
             for s = 1:length(segs)
                 fseek(obj.fid,obj.dataStart(segs(s)),'bof');
@@ -616,11 +636,11 @@ classdef NSxFile < handle
             end
             obj.loadedChannels = chan;
         end
-        
+
     end
-    
+
     methods (Static, Access = protected, Hidden = true)
-        
+
         function c = covEst(mua, spklen)
         % Estimate the covariance in the original signal (adapted and
         % improved from UMS2000 toolbox ? now uses randperm so will not
@@ -635,7 +655,7 @@ classdef NSxFile < handle
             end
             c = cov(waves(:,:));
         end
-        
+
         function settings = parseInputs(inputs,settings,methodName)
         % Input parser (matlab has its own now, which is much more powerful
         % than this, but I got into the habit of using my own...)
@@ -656,7 +676,7 @@ classdef NSxFile < handle
             end
         end
     end
-    
+
     methods (Static)
         function help(varargin)
         % display help for chosen methods (as many as requested), or for

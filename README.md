@@ -1,5 +1,7 @@
 # NSxFile
 
+>__Warning for minor-update as of 2021-12-29__: _variable names have been updated to follow camelCase throughout. For now, methods to duplicate previous naming convention have been created, but will be phased out in future update. Appropriate warnings are thrown when old naming system is used to help locate old code that might need updating. Use ```warning('off','NSxFile:oldNaming')``` to suppress these messages._
+
 >__Warning for minor-update as of 2020-10-02__: _detectSpikes() method now allows the selection of positive or negative deflection detection by setting the value of the 'threshold' input. This means that if you were manually setting a positive threshold value before, it will now detect positive deflections instead. The default is -4, for negative deflections._
 
 NSxFile is an object-oriented approach to working with [Blackrock Microsystems](https://www.blackrockmicro.com) neural data files (e.g. ns3, ns5 etc.) in Matlab.
@@ -11,14 +13,14 @@ This was developed for a couple of reasons:
 * Modular extensibility:
   - Switch between options within the object itself during read-time;
   - Load extra functionality as needed _(e.g. spike extraction and export to [UMS2000](https://github.com/danamics/UMS2K) format is built-in, and writing new modules is as simple as adding a new method)_
-  
+
 The basic reading of the data structure builds on Blackrock's original [openNSx.m](https://github.com/BlackrockMicrosystems/NPMK/blob/master/NPMK/openNSx.m) in the [NPMK](https://github.com/BlackrockMicrosystems/NPMK) toolbox, and updates the methods to run in an object-oriented manner.
 
 ### Quick start
 
 Two versions are included: an "inline" one with all code in a single file ([NSxFile.m](NSxFile.m)); and a "modular" version, with extra methods in their own files in a Matlab class directory ([@NSxFile](Modular%20Version/%40NSxFile)).
 
-Only one is needed: 
+Only one is needed:
 For basic usage, go for the [inline code](NSxFile.m);
 For an easily modifiable version, in order to add your own methods, go for the [modular one](Modular%20Version/%40NSxFile).
 
@@ -65,16 +67,16 @@ Accessible properties within an NSxFile object are:
 | filename | Name of the open file |
 | data | Raw neural data, once read |
 | spikes | Extracted single unit data, once detected |
-| MetaTags | Meta information for the file |
+| metaTags | Meta information for the file |
 | Fs | Sampling frequency of the data |
 | date | Start time of the recording in UTC |
-| date_local | Start time of the recording converted to NSxFile.timezone |
+| dateLocal | Start time of the recording converted to NSxFile.timezone |
 | timezone | The timezone the file was recorded in (defaults to NYC) |
 | duration | vector of the durations of each segment in the file in seconds |
 | datapoints | vector of the raw number of data points (duration * Fs) |
 | channels | array of channel numbers in the file |
-| electrodelabels | cell array of each electrode's name |
-| electrodeinfo | struct array of recording data for each electrode |
+| electrodeLabels | cell array of each electrode's name |
+| electrodeInfo | struct array of recording data for each electrode |
 | useRAM | flag to signify whether or not to use RAM during read |
 | verbose | flag to signify whether or not to print extra info to screen |
 

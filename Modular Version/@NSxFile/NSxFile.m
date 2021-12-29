@@ -6,16 +6,16 @@
 %
 %   Open a file: (quickly reads header info, stores handle to data)
 %       <a href="matlab:nsx.open('filename.ns5');">nsx.open('filename.ns5');</a>
-%   
+%
 %   As a shorthand, the above can be compressed into:
 %       <a href="matlab:nsx = NSxFile('filename','filename.ns5');">nsx = NSxFile('filename','filename.ns5');</a>
 %
 %   At this point, "nsx" contains multiple properties, including:
 %       Fs:              Sampling frequency
 %       date:            Date as stored in the file
-%       date_local:      Date converted to local time (set nsx.timezone
+%       dateLocal:      Date converted to local time (set nsx.timezone
 %                        first, according to where the file was recorded)
-%       electrodelabels: Labels for each channel
+%       electrodeLabels: Labels for each channel
 %
 %   (See <a href="matlab:properties('NSxFile')">properties('NSxFile')</a> for full list)
 %
@@ -23,7 +23,7 @@
 %       <a href="matlab:nsx.read('channel',5,'time',[300 700]);">nsx.read('channel',5,'time',[300 700]);</a>
 %   Or read in all the data:
 %       <a href="matlab:nsx.read();">nsx.read();</a>
-%   The nsx variable has now populated the nsx.data subfield with the 
+%   The nsx variable has now populated the nsx.data subfield with the
 %   requested data. The data are always held in a cell, so that there is no
 %   difference between handling files with and without pauses.
 %
@@ -50,46 +50,45 @@
 
 classdef NSxFile < handle
     properties
-        filename            char
-        data        (1,:)   cell
-        spikes      (1,:)   struct
-        MetaTags            struct
-        Fs          (1,1)   double
-        date                datetime
-        date_local          datetime
-        timezone            char        = 'America/New_York';
-        duration    (1,:)   double
-        datapoints  (1,:)   double
-        channels    (1,1)   double
-        electrodelabels     cell
-        electrodeinfo       struct
-        useRAM      (1,1)   logical     = true
-        verbose     (1,1)   logical     = false
+        filename                char
+        data            (1,:)   cell
+        spikes          (1,:)   struct
+        metaTags                struct
+        Fs              (1,1)   double
+        date                    datetime
+        dateLocal               datetime
+        timezone                char        = 'America/New_York';
+        duration        (1,:)   double
+        datapoints      (1,:)   double
+        channels        (1,1)   double
+        loadedChannels  (1,:)   double
+        electrodeLabels         cell
+        electrodeInfo           struct
+        useRAM          (1,1)   logical     = true
+        verbose         (1,1)   logical     = false
     end
-    
+
     properties (SetAccess = private, Hidden = true)
         cleanup
         fid = -1
         isOpen = false
         isPaused = false
         extHdrLngth = 66;
-        
+
         headerEnd = NaN
         fileEnd = NaN
         dataStart = NaN
         dataEnd = NaN
-        
-        loadedChannels = []
-        
+
         readSettings = struct()
     end
-    
+
     methods
-        
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%% Constructor/Destructor %%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
         function obj = NSxFile(varargin)
         % Constructor method.
         % Run NSXFile.help for more info.
@@ -105,23 +104,23 @@ classdef NSxFile < handle
                     disp([9 'Not assigning ''' varargin{v} ''': not a property of NSxFile object']);
                 end
             end
-            
+
             if ~isempty(obj.filename)
                 obj.open(obj.filename);
             end
         end
-        
+
         function delete(obj)
         % Destructor method
             if obj.isOpen
                 fclose(obj.fid);
             end
         end
-        
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%% Define new modules you write here: %%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
         open(obj,filename);
         read(obj,varargin);
         close(obj);
@@ -130,27 +129,50 @@ classdef NSxFile < handle
         detectSpikes(obj,varargin);
         spikes = exportSpikesUMS(obj,varargin);
         hfig = plot(obj,varargin);
-        
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % TEMPORARY FUNCTIONS TO SEMI-DUPLICATE OLD NAMING VERSIONS: %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function res = electrodelabels(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodelabels" will be deprecated in a future release, please use "electrodeLabels" instead')
+            res = obj.electrodeLabels;
+        end
+
+        function res = electrodeinfo(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodeinfo" will be deprecated in a future release, please use "electrodeInfo" instead')
+            res = obj.electrodeInfo;
+        end
+
+        function res = date_local(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "date_local" will be deprecated in a future release, please use "dateLocal" instead')
+            res = obj.dateLocal;
+        end
+
+        function res = MetaTags(obj)
+            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "MetaTags" will be deprecated in a future release, please use "metaTags" instead')
+            res = obj.metaTags;
+        end
+        % End of temporary deprecated naming functions. These will be removed in a future update.
     end
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%% Internal, private methods: %%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     methods (Access = protected, Hidden = true)
         readHeader(obj);
         parseExtendedHeader(obj,extHdr);
         findData(obj);
         calculateSegments(obj);
-        readData(obj);        
+        readData(obj);
     end
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%% Static, hidden methods: %%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     methods (Static, Access = protected, Hidden = true)
-        
+
         function c = covEst(mua, spklen)
         % Estimate the covariance in the original signal (adapted and
         % improved from UMS2000 toolbox ? now uses randperm so will not
@@ -165,7 +187,7 @@ classdef NSxFile < handle
             end
             c = cov(waves(:,:));
         end
-        
+
         function settings = parseInputs(inputs,settings,methodName)
         % Input parser (matlab has its own now, which is much more powerful
         % than this, but I got into the habit of using my own...)
@@ -186,11 +208,11 @@ classdef NSxFile < handle
             end
         end
     end
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%% Wrapper for help info: %%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     methods (Static)
         function help(varargin)
         % display help for chosen methods (as many as requested), or for

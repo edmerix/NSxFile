@@ -28,12 +28,16 @@ Using either, basic usage to load a file called "example.ns5" is:
 ```Matlab
 % short-hand to immediately read the header of a file and store a handle to it:
 nsx = NSxFile('filename','example.ns5');
-% the nsx variable now contains various information about the file, such as the sampling frequency, electrode labels, duration, and date of recording, both in UTC and local time.
+% the nsx variable now contains various information about the file, such as the
+% sampling frequency, electrode labels, duration, and date of recording, both in
+% UTC and local time.
 
 % Alternatively:
 nsx = NSxFile();
 nsx.read('example.ns5');
-% In either method, a handle to the file to read extra data will be stored in the object, and the file is only ever opened in read-only mode for data peace-of-mind.
+% In either method, a handle to the file to read extra data will be stored in
+% the object, and the file is only ever opened in read-only mode for data
+% peace-of-mind.
 
 % Now read the data from channels 1, 4 and 20, between 200 and 320 seconds:
 nsx.read('channels',[1 4 20],'time',[200 320]);
@@ -41,20 +45,27 @@ nsx.read('channels',[1 4 20],'time',[200 320]);
 % To read the data from all channels and all times, simply call:
 nsx.read();
 
-% Let's extract spikes automatically from channels 4 and 20, using the default settings:
+% Let's extract spikes automatically from channels 4 and 20, using the default
+% settings:
 nsx.detectSpikes('channels',[4 20]);
 % and now export them to a UMS2k style structure:
 spikes = nsx.exportSpikesUMS('channels',[4 20]);
 
-% Now let's read just channels 64 and 73, but take advantage of the ability to not load the whole file into RAM in order to do so (this is slower, but enables loading very large files on machines with less available memory), and tell the function to print more feedback while it's processing:
+% Now let's read just channels 64 and 73, but take advantage of the ability to
+% not load the whole file into RAM in order to do so (this is slower but enables
+% loading very large files on machines with less available memory), and tell the
+% function to print more feedback while it's processing:
 nsx.useRAM = false;
 nsx.verbose = true;
 nsx.read('channels',[64 73]);
 % and now quickly export all channels that have been read into a UMS2k structure:
 spikes = nsx.exportSpikesUMS();
-% without arguments, this will run on all loaded channels, and if a channel hasn't had spike detection run on it already, it will do so seamlessly now.
+% without arguments, this will run on all loaded channels, and if a channel
+% hasn't had spike detection run on it already, it will do so seamlessly now.
 
-% We can now move onto spike sorting the spikes data however we wish (the original detections are in nsx.spikes, so needn't be a UMS2k export), so let's close the file:
+% We can now move onto spike sorting the spikes data however we wish (the
+% original detections are in nsx.spikes, so needn't be a UMS2k export), so let's
+% close the file:
 nsx.close();
 ```
 

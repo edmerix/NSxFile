@@ -359,16 +359,19 @@ classdef NSxFile < handle
             spikes = cell(1,length(settings.channels));
 
             for c = 1:length(settings.channels)
-                if length(obj.spikes) < c ...
-                        || ~isfield(obj.spikes(c),'loaded') ...
-                        || ~obj.spikes(c).loaded
+                if length(obj.spikes) < settings.channels(c) ...
+                        || ~isfield(obj.spikes(settings.channels(c)),'loaded') ...
+                        || ~obj.spikes(settings.channels(c)).loaded
                     disp(['Channel ' num2str(settings.channels(c)) ' has not had spikes extracted, doing so now'])
                     obj.detectSpikes('channels',settings.channels(c));
                 end
-                if obj.spikes(c).loaded
+                if obj.spikes(settings.channels(c)).loaded
                     ind = settings.channels(c);
                     count = length(obj.spikes(ind).spiketimes);
                     spikes{c} = ss_default_params(obj.Fs);
+                    
+                    spikes{c}.info.channel = ind;
+        
                     spikes{c}.info.detect.stds = obj.spikes(ind).sd;
                     spikes{c}.info.detect.dur = obj.spikes(ind).duration;
                     spikes{c}.info.detect.thresh = obj.spikes(ind).threshold;

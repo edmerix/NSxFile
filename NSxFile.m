@@ -47,7 +47,7 @@
 %   usage.
 %
 %   E. M. Merricks, Ph.D. 2020-03-07 <INLINE_VERSION>
-classdef NSxFile < handle
+classdef (CaseInsensitiveProperties=true, TruncatedProperties=true) NSxFile < handle
     properties
         filename                char
         data            (1,:)   cell

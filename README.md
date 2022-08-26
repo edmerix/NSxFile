@@ -1,8 +1,6 @@
 # NSxFile
 
->__Warning for minor-update as of 2021-12-29__: _variable names have been updated to follow camelCase throughout. For now, methods to duplicate previous naming convention have been created, but will be phased out in future update. Appropriate warnings are thrown when old naming system is used to help locate old code that might need updating. Use ```warning('off','NSxFile:oldNaming')``` to suppress these messages._
-
->__Warning for minor-update as of 2020-10-02__: _detectSpikes() method now allows the selection of positive or negative deflection detection by setting the value of the 'threshold' input. This means that if you were manually setting a positive threshold value before, it will now detect positive deflections instead. The default is -4, for negative deflections._
+>_N.B. Case insensitivity (and truncated properties, e.g. ```nsx.chan``` will return ```nsx.channels```) has been activated to bypass issues with different naming conventions and to allow backwards compatability with files saved under previous versions. See [Warnings](#warnings) below for more information._
 
 NSxFile is an object-oriented approach to working with [Blackrock Microsystems](https://www.blackrockmicro.com) neural data files (e.g. ns3, ns5 etc.) in Matlab.
 
@@ -114,3 +112,9 @@ or
 NSxFile.help('read','open','detectSpikes')
 ```
 to see the documentation for multiple methods at once.
+
+### Warnings:
+
+>__Warning for minor-update as of 2021-12-29__: _variable names have been updated to follow camelCase throughout. For now, methods to duplicate previous naming convention have been created, but will be phased out in future update. Appropriate warnings are thrown when old naming system is used to help locate old code that might need updating. Use ```warning('off','NSxFile:oldNaming')``` to suppress these messages. In most use cases this style change will not be impacted as case insensitivity for property names is active._
+
+>__Warning for minor-update as of 2020-10-02__: _detectSpikes() method now allows the selection of positive or negative deflection detection by setting the value of the 'threshold' input. This means that if you were manually setting a positive threshold value before, it will now detect positive deflections instead. The default is -4, for negative deflections._

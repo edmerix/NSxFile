@@ -1,6 +1,6 @@
 # NSxFile
 
->_N.B. Case insensitivity (and truncated properties, e.g. ```nsx.chan``` will return ```nsx.channels```) has been activated to bypass issues with different naming conventions and to allow backwards compatability with files saved under previous versions. See [Warnings](#warnings) below for more information._
+>_N.B. Case insensitivity has been activated to bypass issues with different naming conventions and to allow backwards compatability with files saved under previous versions. See [Warnings](#warnings) below for more information._
 
 NSxFile is an object-oriented approach to working with [Blackrock Microsystems](https://www.blackrockmicro.com) neural data files (e.g. ns3, ns5 etc.) in Matlab.
 

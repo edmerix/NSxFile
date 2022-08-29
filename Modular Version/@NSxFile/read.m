@@ -20,7 +20,10 @@ function read(obj,varargin)
 %                   datapoints (defaults to seconds)
 %   'downsample': Read every specified data point to downsample 
 %                   (e.g. 3 will read every 3rd data point)
-%                   Defaults to 1, for no downsampling.
+%                   Defaults to 1, for no downsampling. N.B. this
+%                   is a holdover from openNSx, do not use to
+%                   downsample data without first low pass
+%                   filtering!
 %
 % Set NSxFile.useRAM to false if you want to read a subset of the
 % file and the file is larger than your available RAM (slower, but

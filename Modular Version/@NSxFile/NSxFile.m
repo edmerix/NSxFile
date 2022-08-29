@@ -30,7 +30,7 @@
 %   Depending on your speed desires/RAM options, you can decide to use RAM
 %   to load the full file, or if the file is too large for your RAM and you
 %   only wish to read a subset, you can turn this off by typing:
-%       <a href="matlab:nsx.useRam = false;">nsx.useRam = false;</a>
+%       <a href="matlab:nsx.useRAM = false;">nsx.useRAM = false;</a>
 %   before calling nsx.read(...);
 %
 %   Once a channel is loaded, spikes can be automatically extracted with:
@@ -48,7 +48,7 @@
 %
 %   E. M. Merricks, Ph.D. 2020-03-07 <MODULAR_VERSION>
 
-classdef (CaseInsensitiveProperties=true, TruncatedProperties=true) NSxFile < handle
+classdef (CaseInsensitiveProperties=true) NSxFile < handle
     properties
         filename                char
         data            (1,:)   cell
@@ -128,31 +128,9 @@ classdef (CaseInsensitiveProperties=true, TruncatedProperties=true) NSxFile < ha
         commonReref(obj,varargin);
         detectSpikes(obj,varargin);
         spikes = exportSpikesUMS(obj,varargin);
-        hfig = plot(obj,varargin);
+        reset(obj);
+        %hfig = plot(obj,varargin);
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % TEMPORARY FUNCTIONS TO SEMI-DUPLICATE OLD NAMING VERSIONS: %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function res = electrodelabels(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodelabels" will be deprecated in a future release, please use "electrodeLabels" instead')
-            res = obj.electrodeLabels;
-        end
-
-        function res = electrodeinfo(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodeinfo" will be deprecated in a future release, please use "electrodeInfo" instead')
-            res = obj.electrodeInfo;
-        end
-
-        function res = date_local(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "date_local" will be deprecated in a future release, please use "dateLocal" instead')
-            res = obj.dateLocal;
-        end
-
-        function res = MetaTags(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "MetaTags" will be deprecated in a future release, please use "metaTags" instead')
-            res = obj.metaTags;
-        end
-        % End of temporary deprecated naming functions. These will be removed in a future update.
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -30,7 +30,7 @@
 %   Depending on your speed desires/RAM options, you can decide to use RAM
 %   to load the full file, or if the file is too large for your RAM and you
 %   only wish to read a subset, you can turn this off by typing:
-%       <a href="matlab:nsx.useRam = false;">nsx.useRam = false;</a>
+%       <a href="matlab:nsx.useRAM = false;">nsx.useRAM = false;</a>
 %   before calling nsx.read(...);
 %
 %   Once a channel is loaded, spikes can be automatically extracted with:
@@ -47,7 +47,7 @@
 %   usage.
 %
 %   E. M. Merricks, Ph.D. 2020-03-07 <INLINE_VERSION>
-classdef (CaseInsensitiveProperties=true, TruncatedProperties=true) NSxFile < handle
+classdef (CaseInsensitiveProperties=true) NSxFile < handle
     properties
         filename                char
         data            (1,:)   cell
@@ -145,7 +145,10 @@ classdef (CaseInsensitiveProperties=true, TruncatedProperties=true) NSxFile < ha
         %                   datapoints (defaults to seconds)
         %   'downsample': Read every specified data point to downsample
         %                   (e.g. 3 will read every 3rd data point)
-        %                   Defaults to 1, for no downsampling.
+        %                   Defaults to 1, for no downsampling. N.B. this
+        %                   is a holdover from openNSx, do not use to
+        %                   downsample data without first low pass
+        %                   filtering!
         %
         % Set NSxFile.useRAM to false if you want to read a subset of the
         % file and the file is larger than your available RAM (slower, but
@@ -156,7 +159,7 @@ classdef (CaseInsensitiveProperties=true, TruncatedProperties=true) NSxFile < ha
             if isnan(obj.headerEnd) || obj.headerEnd < obj.extHdrLngth
                 error('Haven''t managed to find the end of the header data')
             end
-
+            
             settings.channel = -1;
             settings.channels = []; % 'channels' is more routinely used outside this function, so allow both
             settings.time = [-Inf Inf];
@@ -392,28 +395,17 @@ classdef (CaseInsensitiveProperties=true, TruncatedProperties=true) NSxFile < ha
             %spikes(dropping == 1) = [];
             spikes = [spikes{:}];
         end
+
+        function reset(obj)
+        % "Un-read" the data, i.e. reset it to not have any channels read
+        % or spike data extracted, but keep all the header information and
+        % the handle to the file open if it hasn't been closed.
+            obj.data = cell(1,0);
+            obj.spikes = struct();
+            obj.loadedChannels = [];
+            obj.readSettings = struct();
+        end
         
-        % TEMPORARY FUNCTIONS TO SEMI-DUPLICATE OLD NAMING VERSIONS:
-        function res = electrodelabels(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodelabels" will be deprecated in a future release, please use "electrodeLabels" instead')
-            res = obj.electrodeLabels;
-        end
-
-        function res = electrodeinfo(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "electrodeinfo" will be deprecated in a future release, please use "electrodeInfo" instead')
-            res = obj.electrodeInfo;
-        end
-
-        function res = date_local(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "date_local" will be deprecated in a future release, please use "dateLocal" instead')
-            res = obj.dateLocal;
-        end
-
-        function res = MetaTags(obj)
-            warning('NSxFile:oldNaming','Naming has been updated to "camelCase", "MetaTags" will be deprecated in a future release, please use "metaTags" instead')
-            res = obj.metaTags;
-        end
-
         function close(obj)
         % close handle to file (use when done loading specific data etc.)
             fclose(obj.fid);

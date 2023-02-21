@@ -55,7 +55,8 @@ settings = obj.parseInputs(varargin,settings);
 
 switch settings.filterType
     case {'fir','FIR'}
-        [b,a] = fir1(settings.filterOrder,settings.bandpass/(obj.Fs/2));
+        b = fir1(settings.filterOrder,settings.bandpass/(obj.Fs/2));
+        a = 1;
     case {'butter','Butterworth','Butter','butterworth'}
         [b,a] = butter(settings.filterOrder,settings.bandpass/(obj.Fs/2));
     otherwise

@@ -18,7 +18,7 @@ function detectSpikes(obj,varargin)
 %                   that Butterworth filter orders are poles, while
 %                   FIR are zeros, and Butterworth should have a
 %                   much lower order, e.g. 2 or 4.
-%   'blank':       [1 x 2] array of times (in seconds) to ignore
+%   'blank':       [n x 2] array of times (in seconds) to ignore
 %                   during both the threshold calculation and spike
 %                   extraction. Useful for blanking seizures.
 %                   Defaults to [], i.e. not blanking anything.
@@ -92,7 +92,9 @@ for c = 1:length(settings.channels)
 
         mask = ones(1,length(mua));
         if ~isempty(settings.blank)
-            mask(round(settings.blank(1)*obj.Fs):round(settings.blank(2)*obj.Fs)) = 0;
+            for b = 1:size(settings.blank,1)
+                mask(round(settings.blank(b,1)*obj.Fs):round(settings.blank(b,2)*obj.Fs)) = 0;
+            end
         end
         rqq = median(abs(mua(mask == 1))/0.6745);
         obj.spikes(settings.channels(c)).threshold = rqq * settings.threshold;

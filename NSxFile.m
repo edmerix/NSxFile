@@ -297,8 +297,8 @@ classdef (CaseInsensitiveProperties=true) NSxFile < handle
 
                     mask = ones(1,length(mua));
                     if ~isempty(settings.blank)
-                        for b = 1:size(settings.blank,1)
-                            mask(round(settings.blank(b,1)*obj.Fs):round(settings.blank(b,2)*obj.Fs)) = 0;
+                        for bl = 1:size(settings.blank,1)
+                            mask(round(settings.blank(bl,1)*obj.Fs):round(settings.blank(bl,2)*obj.Fs)) = 0;
                         end
                     end
                     rqq = median(abs(mua(mask == 1))/0.6745);

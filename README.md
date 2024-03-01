@@ -32,7 +32,7 @@ nsx = NSxFile('filename','example.ns5');
 
 % Alternatively:
 nsx = NSxFile();
-nsx.read('example.ns5');
+nsx.open('example.ns5');
 % In either method, a handle to the file to read extra data will be stored in
 % the object, and the file is only ever opened in read-only mode for data
 % peace-of-mind.

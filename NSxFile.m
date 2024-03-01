@@ -308,17 +308,21 @@ classdef (CaseInsensitiveProperties=true) NSxFile < handle
                     obj.spikes(settings.channels(c)).duration = single(length(mua)/obj.Fs);
 
                     direction = settings.threshold/abs(settings.threshold); % find out if threshold is -ve or +ve
-                    [~,locs] = findpeaks(direction * mua,'minpeakheight',direction * obj.spikes(settings.channels(c)).threshold);
+                    blankedMUA = mua;
+                    blankedMUA(mask == 0) = NaN;
+                    [~,locs] = findpeaks(direction * blankedMUA,'minpeakheight',direction * obj.spikes(settings.channels(c)).threshold);
 
                     pre = floor(settings.window(1)*(obj.Fs/1e3));
                     post = ceil(settings.window(2)*(obj.Fs/1e3));
 
                     locs(locs+pre < 1 | locs+post > length(mua)) = [];
-                    % don't include the spikes that were within the blanking period:
+                    % don't include the spikes that were within the
+                    % blanking period: (Old approach)
+                    %{
                     if ~isempty(settings.blank)
                         locs(locs >= settings.blank(1)*obj.Fs & locs < settings.blank(2)*obj.Fs) = [];
                     end
-
+                    %}
                     spkwin = pre:post;
                     spks = zeros(length(spkwin),length(locs));
 
@@ -338,7 +342,7 @@ classdef (CaseInsensitiveProperties=true) NSxFile < handle
                     obj.spikes(settings.channels(c)).waveforms = spks';
                     obj.spikes(settings.channels(c)).spiketimes = single(spkt);
                     obj.spikes(settings.channels(c)).window = settings.window;
-                    obj.spikes(settings.channels(c)).covariance = obj.covEst(mua, length(spkwin));
+                    obj.spikes(settings.channels(c)).covariance = obj.covEst(blankedMUA, length(spkwin));
                     obj.spikes(settings.channels(c)).loaded = true;
                     disp([9 'Found ' num2str(length(spkt)) ' spikes (' num2str(length(j)) ' were auto-removed due to large amplitude)'])
                 end
